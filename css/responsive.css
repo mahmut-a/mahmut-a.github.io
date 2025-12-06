@@ -1,0 +1,111 @@
+/* Responsive Tasarım */
+
+/* Tablet */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    main h2 {
+        font-size: 1.5rem;
+    }
+
+    .restaurants-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .restaurant-card-image {
+        height: 180px;
+    }
+
+    .product-image {
+        height: 160px;
+    }
+}
+
+/* Mobil */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+
+    header {
+        padding: 1rem 0;
+    }
+
+    header h1 {
+        font-size: 1.3rem;
+    }
+
+    .lang-toggle {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    main {
+        padding: 1.5rem 0;
+    }
+
+    main h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .restaurants-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .products-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .restaurant-card-image {
+        height: 160px;
+    }
+
+    .product-image {
+        height: 150px;
+    }
+
+    .restaurant-card-content,
+    .product-content {
+        padding: 1rem;
+    }
+
+    .category-title {
+        font-size: 1.2rem;
+    }
+
+    .product-name {
+        font-size: 1rem;
+    }
+
+    .product-price {
+        font-size: 1.2rem;
+    }
+}
+
+/* Küçük Ekranlar */
+@media (max-width: 320px) {
+    header h1 {
+        font-size: 1.1rem;
+    }
+
+    .lang-toggle {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    main h2 {
+        font-size: 1.1rem;
+    }
+}
+
