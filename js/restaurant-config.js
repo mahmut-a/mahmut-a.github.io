@@ -42,7 +42,7 @@ async function fetchAllRestaurants() {
             throw error;
         }
 
-        // Veriyi formatla
+        // Veriyi formatla (theme_id ile birlikte)
         const formattedRestaurants = (data || []).map(restaurant => ({
             id: restaurant.id,
             name: restaurant.name,
@@ -52,7 +52,7 @@ async function fetchAllRestaurants() {
             logo: restaurant.logo || null,
             supabaseUrl: restaurant.supabase_url,
             supabaseKey: restaurant.supabase_key,
-            theme: restaurant.theme || {}
+            theme_id: restaurant.theme_id || null
         }));
 
         // Cache'e kaydet
@@ -127,6 +127,11 @@ function getRestaurantByIdSync(id) {
 function clearRestaurantsCache() {
     restaurantsCache = null;
     restaurantsCacheTime = null;
+}
+
+// Merkezi Supabase istemcisini döndür (diğer modüller için)
+function getCentralSupabaseClient() {
+    return initCentralSupabaseClient();
 }
 
 // Sayfa yüklendiğinde restoranları önceden yükle

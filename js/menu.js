@@ -66,6 +66,10 @@ function renderMenu() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Tüm cache'leri temizle (restoran menüsü açıldığında)
+    clearRestaurantsCache();
+    clearCart(); // Sepet cache'ini de temizle
+    
     const menuContainer = document.getElementById('menu-container');
     const loading = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
@@ -95,10 +99,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Supabase istemcisini başlat
         initSupabaseClient(restaurantConfig);
 
-        // Tema ayarlarını uygula
-        if (restaurantConfig.theme) {
-            applyTheme(restaurantConfig.theme);
-        }
+        // Tema ayarlarını uygula (veritabanından veya config'den)
+        const centralClient = getCentralSupabaseClient();
+        await loadAndApplyTheme(restaurantConfig, centralClient);
 
         // Menü verilerini yükle
         menuData = await fetchMenuData();

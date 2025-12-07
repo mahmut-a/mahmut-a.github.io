@@ -162,7 +162,7 @@ main h2 {
 
 .category-title {
     font-size: 1.75rem;
-    color: var(--primary-color);
+    color: var(--text-color);
     margin-bottom: 1.5rem;
     padding-bottom: 0.75rem;
     border-bottom: 3px solid var(--secondary-color);
@@ -235,7 +235,7 @@ main h2 {
 .product-name {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--text-color);
     margin-bottom: 0.5rem;
 }
 
