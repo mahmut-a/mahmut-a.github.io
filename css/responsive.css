@@ -27,6 +27,16 @@
     .product-image {
         height: 160px;
     }
+
+    .cart-sidebar {
+        width: 380px;
+        max-width: 85vw;
+    }
+
+    .cart-toggle {
+        bottom: 1.75rem;
+        right: 1.75rem;
+    }
 }
 
 /* Mobil */
@@ -91,6 +101,45 @@
     .product-price {
         font-size: 1.2rem;
     }
+
+    /* Sepet Mobil İyileştirmeleri */
+    .cart-toggle {
+        width: 56px;
+        height: 56px;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        font-size: 1.3rem;
+    }
+
+    .cart-sidebar {
+        width: 100vw;
+        right: -100vw;
+    }
+
+    .cart-sidebar.active {
+        right: 0;
+    }
+
+    .cart-item {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .cart-item-image {
+        width: 100%;
+        height: 120px;
+    }
+
+    .product-quantity-controls {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .product-quantity-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
 }
 
 /* Küçük Ekranlar */
@@ -108,4 +157,5 @@
         font-size: 1.1rem;
     }
 }
+
 

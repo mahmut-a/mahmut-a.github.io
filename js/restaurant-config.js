@@ -1,51 +1,140 @@
 // Restoran Yapılandırma Dosyası
-// Her restoran için Supabase bağlantı bilgileri burada saklanır
+// Merkezi Supabase'den restoran yapılandırmalarını çeker
 
-const RESTAURANTS_CONFIG = {
-    // Örnek Restoran 1
-    'nalonaRestoran': {
-        id: 'nalonaRestoran',
-        name: 'Nalona Restoran',
-        name_en: 'Nalona Restoran',
-        description: 'Lezzetli yemekler ve sıcak bir atmosfer',
-        description_en: 'Delicious food and warm atmosphere',
-        logo: null, // Logo URL'si buraya eklenebilir
-        supabaseUrl: 'https://ysahpcvlquczubwywinh.supabase.co', // Restoranın Supabase URL'si
-        supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzYWhwY3ZscXVjenVid3l3aW5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNDQ3NzAsImV4cCI6MjA4MDYyMDc3MH0.Lm35XQYU1r0A-FvOP-dOtyu5yONVfHFjY4H2__JLIkk' // Restoranın Supabase anon key'i
-    },
+// Merkezi Supabase bağlantı bilgileri
+// Bu değerleri .env dosyasından veya environment variables'dan alabilirsiniz
+// Production'da bu değerler build time'da inject edilmeli
+const CENTRAL_SUPABASE_URL = window.CENTRAL_SUPABASE_URL || 'https://msyhtxtjtpebdcubxboa.supabase.co';
+const CENTRAL_SUPABASE_KEY = window.CENTRAL_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zeWh0eHRqdHBlYmRjdWJ4Ym9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDQ2MzIsImV4cCI6MjA4MDY4MDYzMn0.rhXFr6aS0OdnPrUMGIOkF9SZ-PaoRwzW3vq8VxCmij8';
 
-    // Örnek Restoran 2
-    'aydinLahmacun': {
-        id: 'aydinLahmacun',
-        name: 'Aydın Lahmacun',
-        name_en: 'Aydın Lahmacun',
-        description: 'Vartonun Lahmacuncusu',
-        description_en: 'Traditional flavors, modern presentation',
-        logo: null,
-        supabaseUrl: 'https://ysahpcvlquczubwywinh.supabase.co', // Restoranın Supabase URL'si
-        supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzYWhwY3ZscXVjenVid3l3aW5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNDQ3NzAsImV4cCI6MjA4MDYyMDc3MH0.Lm35XQYU1r0A-FvOP-dOtyu5yONVfHFjY4H2__JLIkk' // Restoranın Supabase anon key'i
+// Merkezi Supabase istemcisi
+let centralSupabaseClient = null;
+
+// Merkezi Supabase istemcisini başlat
+function initCentralSupabaseClient() {
+    if (!centralSupabaseClient) {
+        centralSupabaseClient = supabase.createClient(
+            CENTRAL_SUPABASE_URL,
+            CENTRAL_SUPABASE_KEY
+        );
     }
+    return centralSupabaseClient;
+}
 
-    // Yeni restoran eklemek için buraya yeni bir giriş ekleyin
-    // 'restaurant-3': {
-    //     id: 'restaurant-3',
-    //     name: 'Yeni Restoran',
-    //     name_en: 'New Restaurant',
-    //     description: 'Açıklama',
-    //     description_en: 'Description',
-    //     logo: null,
-    //     supabaseUrl: 'https://xxx.supabase.co',
-    //     supabaseKey: 'xxx'
-    // }
-};
+// Restoran yapılandırmalarını cache'le
+let restaurantsCache = null;
+let restaurantsCacheTime = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 dakika
+
+// Tüm restoranları merkezi Supabase'den getir
+async function fetchAllRestaurants() {
+    try {
+        const client = initCentralSupabaseClient();
+        
+        const { data, error } = await client
+            .from('restaurants')
+            .select('*')
+            .eq('is_active', true)
+            .order('display_order', { ascending: true });
+
+        if (error) {
+            console.error('Restoranlar yüklenirken hata:', error);
+            throw error;
+        }
+
+        // Veriyi formatla
+        const formattedRestaurants = (data || []).map(restaurant => ({
+            id: restaurant.id,
+            name: restaurant.name,
+            name_en: restaurant.name_en || restaurant.name,
+            description: restaurant.description || '',
+            description_en: restaurant.description_en || restaurant.description || '',
+            logo: restaurant.logo || null,
+            supabaseUrl: restaurant.supabase_url,
+            supabaseKey: restaurant.supabase_key,
+            theme: restaurant.theme || {}
+        }));
+
+        // Cache'e kaydet
+        restaurantsCache = formattedRestaurants;
+        restaurantsCacheTime = Date.now();
+
+        return formattedRestaurants;
+    } catch (error) {
+        console.error('Restoranlar yüklenirken hata:', error);
+        
+        // Hata durumunda cache'den dön
+        if (restaurantsCache) {
+            console.warn('Cache\'den restoran verileri kullanılıyor');
+            return restaurantsCache;
+        }
+        
+        throw error;
+    }
+}
+
+// Cache'den restoranları getir (eğer geçerliyse)
+function getCachedRestaurants() {
+    if (restaurantsCache && restaurantsCacheTime) {
+        const now = Date.now();
+        if (now - restaurantsCacheTime < CACHE_DURATION) {
+            return restaurantsCache;
+        }
+    }
+    return null;
+}
 
 // Tüm restoranları listeleme fonksiyonu
-function getAllRestaurants() {
-    return Object.values(RESTAURANTS_CONFIG);
+async function getAllRestaurants() {
+    // Önce cache'i kontrol et
+    const cached = getCachedRestaurants();
+    if (cached) {
+        return cached;
+    }
+    
+    // Cache yoksa veya süresi dolmuşsa fetch et
+    return await fetchAllRestaurants();
 }
 
 // ID'ye göre restoran bulma fonksiyonu
-function getRestaurantById(id) {
-    return RESTAURANTS_CONFIG[id] || null;
+async function getRestaurantById(id) {
+    // Önce cache'i kontrol et
+    const cached = getCachedRestaurants();
+    if (cached) {
+        const restaurant = cached.find(r => r.id === id);
+        if (restaurant) {
+            return restaurant;
+        }
+    }
+    
+    // Cache'de yoksa veya süresi dolmuşsa fetch et
+    const restaurants = await fetchAllRestaurants();
+    return restaurants.find(r => r.id === id) || null;
 }
 
+// Senkron versiyon (cache'den döner, eğer cache yoksa null döner)
+// Bu fonksiyon sayfa ilk yüklendiğinde kullanılabilir
+function getAllRestaurantsSync() {
+    return restaurantsCache || [];
+}
+
+function getRestaurantByIdSync(id) {
+    if (!restaurantsCache) return null;
+    return restaurantsCache.find(r => r.id === id) || null;
+}
+
+// Cache'i temizle
+function clearRestaurantsCache() {
+    restaurantsCache = null;
+    restaurantsCacheTime = null;
+}
+
+// Sayfa yüklendiğinde restoranları önceden yükle
+if (typeof window !== 'undefined') {
+    // Sayfa yüklendiğinde restoranları arka planda yükle
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchAllRestaurants().catch(error => {
+            console.error('Restoranlar önceden yüklenirken hata:', error);
+        });
+    });
+}

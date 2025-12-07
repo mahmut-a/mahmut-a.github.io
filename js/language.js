@@ -11,7 +11,13 @@ const translations = {
         'no-menu': 'Menü bulunamadı',
         'no-categories': 'Kategori bulunamadı',
         'no-products': 'Ürün bulunamadı',
-        'try-again': 'Tekrar Deneyin'
+        'try-again': 'Tekrar Deneyin',
+        'cart-title': 'Sepet',
+        'total': 'Toplam:',
+        'clear-cart': 'Sepeti Temizle',
+        'empty-cart': 'Sepetiniz boş',
+        'add-to-cart': 'Sepete Ekle',
+        'remove-from-cart': 'Sepetten Çıkar'
     },
     en: {
         'app-title': 'QR Menu',
@@ -23,7 +29,13 @@ const translations = {
         'no-menu': 'Menu not found',
         'no-categories': 'No categories found',
         'no-products': 'No products found',
-        'try-again': 'Try Again'
+        'try-again': 'Try Again',
+        'cart-title': 'Cart',
+        'total': 'Total:',
+        'clear-cart': 'Clear Cart',
+        'empty-cart': 'Your cart is empty',
+        'add-to-cart': 'Add to Cart',
+        'remove-from-cart': 'Remove from Cart'
     }
 };
 

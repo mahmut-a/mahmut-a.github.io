@@ -1,14 +1,14 @@
 // Ana Sayfa JavaScript
 
 // Restoran listesini render et
-function renderRestaurants() {
+async function renderRestaurants() {
     const restaurantsContainer = document.getElementById('restaurants-container');
     const loading = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
 
     try {
-        // Restoranları yükle
-        const restaurants = getAllRestaurants();
+        // Restoranları yükle (async)
+        const restaurants = await getAllRestaurants();
 
         if (restaurants.length === 0) {
             loading.style.display = 'none';
@@ -41,7 +41,7 @@ function renderRestaurants() {
     } catch (error) {
         console.error('Restoranlar yüklenirken hata:', error);
         loading.style.display = 'none';
-        errorDiv.textContent = t('error-loading');
+        errorDiv.textContent = `${t('error-loading')}: ${error.message || error}`;
         errorDiv.style.display = 'block';
     }
 }

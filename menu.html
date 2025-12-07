@@ -27,10 +27,39 @@
         </div>
     </main>
 
+    <!-- Sepet Floating Button -->
+    <button id="cart-toggle" class="cart-toggle" aria-label="Sepet">
+        <span class="cart-icon">🛒</span>
+        <span id="cart-count" class="cart-count">0</span>
+    </button>
+
+    <!-- Sepet Sidebar -->
+    <div id="cart-sidebar" class="cart-sidebar">
+        <div class="cart-sidebar-header">
+            <h2 data-translate="cart-title">Sepet</h2>
+            <button id="cart-close" class="cart-close" aria-label="Sepeti Kapat">×</button>
+        </div>
+        <div id="cart-items" class="cart-items">
+            <!-- Sepet öğeleri buraya yüklenecek -->
+        </div>
+        <div class="cart-sidebar-footer">
+            <div class="cart-total">
+                <span data-translate="total">Toplam:</span>
+                <span id="cart-total-price" class="cart-total-price">₺0,00</span>
+            </div>
+            <button id="cart-clear" class="cart-clear-btn" data-translate="clear-cart">Sepeti Temizle</button>
+        </div>
+    </div>
+
+    <!-- Sepet Overlay -->
+    <div id="cart-overlay" class="cart-overlay"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/language.js"></script>
     <script src="js/restaurant-config.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/cart.js"></script>
     <script src="js/menu.js"></script>
 </body>
 </html>

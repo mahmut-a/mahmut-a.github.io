@@ -6,10 +6,12 @@ Restoranlar için QR kod tabanlı dijital menü uygulaması. Her restoranın ken
 
 - 📱 **Responsive Tasarım**: Tüm cihazlarda mükemmel görünüm
 - 🌍 **Çoklu Dil Desteği**: Türkçe ve İngilizce
-- 🏪 **Çoklu Restoran**: Her restoranın kendi Supabase projesi
-- 🎨 **Modern UI**: Temiz ve kullanıcı dostu arayüz
+- 🏪 **Merkezi Restoran Yönetimi**: Tüm restoranlar merkezi Supabase'den yönetilir
+- 🛒 **Sepet Sistemi**: Ürün ekleme, çıkarma ve fiyat hesaplama
+- 🎨 **Özelleştirilebilir Temalar**: Her restoran kendi temasını özelleştirebilir
 - ⚡ **Hızlı ve Hafif**: Pure JavaScript, framework yok
-- 🔒 **QR Kod Erişimi**: Menü sayfası sadece QR kod ile erişilebilir
+- 🔒 **Güvenli API Key Yönetimi**: API key'ler merkezi Supabase'de saklanır
+- 📊 **Modern UI**: Gelişmiş animasyonlar ve kullanıcı deneyimi
 
 ## Teknolojiler
 
@@ -28,9 +30,55 @@ git clone https://github.com/kullaniciadi/QRMenu.git
 cd QRMenu
 ```
 
-### 2. Supabase Veritabanı Kurulumu
+### 2. Merkezi Supabase Kurulumu
 
-Her restoran için kendi Supabase projesi oluşturulmalıdır.
+**ÖNEMLİ**: Önce merkezi Supabase projesi oluşturulmalıdır. Bu proje tüm restoran yapılandırmalarını saklar.
+
+Detaylı kurulum talimatları için `CENTRAL_SUPABASE_SETUP.md` dosyasına bakın.
+
+#### Merkezi Supabase'de Restaurants Tablosu
+
+Merkezi Supabase projenizde `restaurants` tablosunu oluşturun:
+
+```sql
+CREATE TABLE restaurants (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  name_en TEXT,
+  description TEXT,
+  description_en TEXT,
+  logo TEXT,
+  supabase_url TEXT NOT NULL,
+  supabase_key TEXT NOT NULL,
+  theme JSONB DEFAULT '{}'::jsonb,
+  is_active BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS Politikası
+ALTER TABLE restaurants ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Restaurants herkese açık okuma"
+ON restaurants FOR SELECT
+USING (is_active = true);
+```
+
+#### Merkezi Supabase Bağlantı Bilgileri
+
+`js/restaurant-config.js` dosyasında merkezi Supabase bağlantı bilgilerini ayarlayın:
+
+```javascript
+const CENTRAL_SUPABASE_URL = 'https://your-central-project.supabase.co';
+const CENTRAL_SUPABASE_KEY = 'your-anon-key-here';
+```
+
+**Not**: Production ortamında bu değerler environment variables veya build-time injection ile sağlanmalıdır.
+
+### 3. Restoran Supabase Veritabanı Kurulumu
+
+Her restoran için kendi Supabase projesi oluşturulmalıdır (menü verileri için).
 
 #### Supabase'de Tabloları Oluşturma
 
@@ -81,29 +129,56 @@ ON products FOR SELECT
 USING (true);
 ```
 
-### 3. Restoran Yapılandırması
+### 4. Restoran Yapılandırması
 
-`js/restaurant-config.js` dosyasına yeni restoran ekleyin:
+Yeni restoran eklemek için merkezi Supabase'deki `restaurants` tablosuna kayıt ekleyin:
 
-```javascript
-'restaurant-id': {
-    id: 'restaurant-id',
-    name: 'Restoran Adı',
-    name_en: 'Restaurant Name',
-    description: 'Restoran açıklaması',
-    description_en: 'Restaurant description',
-    logo: 'https://example.com/logo.png', // Opsiyonel
-    supabaseUrl: 'https://your-project.supabase.co',
-    supabaseKey: 'your-anon-key'
+```sql
+INSERT INTO restaurants (id, name, name_en, description, description_en, supabase_url, supabase_key, theme, display_order)
+VALUES (
+  'restaurant-id',
+  'Restoran Adı',
+  'Restaurant Name',
+  'Restoran açıklaması',
+  'Restaurant description',
+  'https://your-project.supabase.co',
+  'your-anon-key',
+  '{
+    "primaryColor": "#2c3e50",
+    "secondaryColor": "#3498db",
+    "accentColor": "#e74c3c",
+    "borderRadius": "12px"
+  }'::jsonb,
+  1
+);
+```
+
+**Tema Özelleştirme:**
+
+Her restoran için tema ayarları JSON formatında saklanır:
+
+```json
+{
+  "primaryColor": "#2c3e50",
+  "secondaryColor": "#3498db",
+  "accentColor": "#e74c3c",
+  "textColor": "#333",
+  "textLight": "#666",
+  "bgColor": "#f8f9fa",
+  "cardBg": "#ffffff",
+  "borderColor": "#e0e0e0",
+  "borderRadius": "12px",
+  "fontFamily": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
 }
 ```
 
 **Supabase URL ve Key Nasıl Bulunur:**
-1. Supabase projenize giriş yapın
+1. Restoranın Supabase projesine giriş yapın
 2. Settings > API bölümüne gidin
 3. `Project URL` ve `anon public` key'i kopyalayın
+4. Bu bilgileri merkezi Supabase'deki `restaurants` tablosuna ekleyin
 
-### 4. QR Kod Oluşturma
+### 5. QR Kod Oluşturma
 
 Her restoran için QR kod oluşturun. QR kod şu formatta bir URL içermelidir:
 
@@ -159,6 +234,23 @@ menu.html?restaurant=restaurant-id
 
 Normal kullanıcılar bu sayfaya doğrudan erişemezler, sadece QR kod okutarak erişebilirler.
 
+### Sepet Sistemi
+
+- Ürün kartlarındaki +/- butonları ile ürün miktarı ayarlanabilir
+- Sağ alt köşedeki sepet butonu ile sepet görüntülenebilir
+- Sepet içeriği localStorage'da saklanır
+- Toplam fiyat otomatik hesaplanır
+- Sepet temizlenebilir
+
+### Tema Sistemi
+
+Her restoran kendi temasını özelleştirebilir:
+- Renkler (primary, secondary, accent)
+- Arka plan renkleri
+- Border radius
+- Font family
+- Tema ayarları merkezi Supabase'deki `restaurants` tablosunda `theme` JSONB alanında saklanır
+
 ## Veri Yapısı
 
 ### Categories (Kategoriler)
@@ -194,29 +286,35 @@ Yeni çeviriler eklemek için `js/language.js` dosyasındaki `translations` obje
 
 ## Özelleştirme
 
-### Renkler
+### Tema Özelleştirme
 
-Renkleri değiştirmek için `css/style.css` dosyasındaki CSS değişkenlerini düzenleyin:
+Restoran temaları merkezi Supabase'deki `restaurants` tablosunda saklanır. Tema ayarları JSON formatında `theme` alanında tutulur.
 
-```css
-:root {
-    --primary-color: #2c3e50;
-    --secondary-color: #3498db;
-    --accent-color: #e74c3c;
-    /* ... */
-}
-```
+Varsayılan tema ayarları `js/theme.js` dosyasında tanımlıdır. Tema sistemi CSS custom properties kullanır.
 
 ### Stil
 
 Tüm stiller `css/style.css` ve `css/responsive.css` dosyalarında bulunur. İstediğiniz gibi özelleştirebilirsiniz.
 
+### Yeni Özellikler Ekleme
+
+- **Sepet**: `js/cart.js` - Sepet yönetimi
+- **Tema**: `js/theme.js` - Tema yönetimi
+- **Dil**: `js/language.js` - Çoklu dil desteği
+
 ## Sorun Giderme
 
 ### Menü Yüklenmiyor
 
-1. Supabase URL ve Key'in doğru olduğundan emin olun
-2. Supabase'de RLS politikalarının doğru ayarlandığını kontrol edin
+1. Merkezi Supabase bağlantı bilgilerinin doğru olduğundan emin olun (`js/restaurant-config.js`)
+2. Restoranın Supabase URL ve Key'inin merkezi Supabase'de doğru kayıtlı olduğunu kontrol edin
+3. Supabase'de RLS politikalarının doğru ayarlandığını kontrol edin
+4. Tarayıcı konsolunda hata mesajlarını kontrol edin
+
+### Restoranlar Görünmüyor
+
+1. Merkezi Supabase'deki `restaurants` tablosunda `is_active = true` olan kayıtların olduğundan emin olun
+2. Merkezi Supabase bağlantı bilgilerinin doğru olduğunu kontrol edin
 3. Tarayıcı konsolunda hata mesajlarını kontrol edin
 
 ### QR Kod Çalışmıyor
@@ -225,11 +323,50 @@ Tüm stiller `css/style.css` ve `css/responsive.css` dosyalarında bulunur. İst
 2. GitHub Pages'in aktif olduğunu kontrol edin
 3. URL'de restoran ID'sinin doğru olduğundan emin olun
 
+### Sepet Çalışmıyor
+
+1. Tarayıcı localStorage'ın aktif olduğundan emin olun
+2. Tarayıcı konsolunda JavaScript hatalarını kontrol edin
+3. `js/cart.js` dosyasının yüklendiğinden emin olun
+
 ## Lisans
 
 Bu proje açık kaynaklıdır ve serbestçe kullanılabilir.
 
+## Dosya Yapısı
+
+```
+QRMenu/
+├── index.html              # Ana sayfa
+├── menu.html               # Menü sayfası
+├── css/
+│   ├── style.css          # Ana stiller
+│   └── responsive.css     # Responsive stiller
+├── js/
+│   ├── language.js        # Dil yönetimi
+│   ├── restaurant-config.js  # Restoran yapılandırması (merkezi Supabase)
+│   ├── supabase-client.js   # Supabase istemci yönetimi
+│   ├── theme.js           # Tema yönetimi
+│   ├── cart.js            # Sepet yönetimi
+│   ├── menu.js            # Menü sayfası logic
+│   └── main.js            # Ana sayfa logic
+├── CENTRAL_SUPABASE_SETUP.md  # Merkezi Supabase kurulum rehberi
+└── README.md              # Bu dosya
+```
+
+## Yeni Özellikler
+
+### v2.0 - Merkezi Yönetim ve Sepet Sistemi
+
+- ✅ Merkezi Supabase ile restoran yönetimi
+- ✅ Güvenli API key saklama
+- ✅ Sepet sistemi (ürün ekleme, çıkarma, fiyat hesaplama)
+- ✅ Restoran bazlı tema özelleştirme
+- ✅ Gelişmiş UI/UX iyileştirmeleri
+- ✅ Mobil uyumlu sepet arayüzü
+
 ## Destek
 
 Sorularınız için issue açabilir veya iletişime geçebilirsiniz.
+
 
