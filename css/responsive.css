@@ -140,6 +140,43 @@
         height: 32px;
         font-size: 1rem;
     }
+
+    /* Sipariş Modal Mobil */
+    .order-modal-content {
+        max-width: 100%;
+        margin: 0.5rem;
+        max-height: 95vh;
+    }
+
+    .order-modal-header {
+        padding: 1rem;
+    }
+
+    .order-modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .order-form {
+        padding: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .order-cancel-btn,
+    .order-submit-btn {
+        width: 100%;
+    }
+
+    /* Sipariş Bildirimleri Mobil */
+    .order-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        min-width: auto;
+    }
 }
 
 /* Küçük Ekranlar */

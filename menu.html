@@ -47,6 +47,9 @@
                 <span data-translate="total">Toplam:</span>
                 <span id="cart-total-price" class="cart-total-price">₺0,00</span>
             </div>
+            <button id="whatsapp-order-btn" class="whatsapp-order-btn" data-translate="whatsapp-order" style="display: none;">
+                <span class="whatsapp-icon">📱</span> <span data-translate="whatsapp-order">WhatsApp ile Sipariş Ver</span>
+            </button>
             <button id="cart-clear" class="cart-clear-btn" data-translate="clear-cart">Sepeti Temizle</button>
         </div>
     </div>
@@ -54,12 +57,45 @@
     <!-- Sepet Overlay -->
     <div id="cart-overlay" class="cart-overlay"></div>
 
+    <!-- İletişim Bilgileri Modal -->
+    <div id="order-modal" class="order-modal">
+        <div class="order-modal-overlay"></div>
+        <div class="order-modal-content">
+            <div class="order-modal-header">
+                <h2 data-translate="order-contact-info">İletişim Bilgileri</h2>
+                <button id="order-modal-close" class="order-modal-close" aria-label="Kapat">×</button>
+            </div>
+            <form id="order-form" class="order-form">
+                <div class="form-group">
+                    <label for="order-name" data-translate="order-name">Ad Soyad</label>
+                    <input type="text" id="order-name" name="name" required data-translate="order-name" placeholder="Ad Soyad">
+                    <span class="error-message" id="error-name"></span>
+                </div>
+                <div class="form-group">
+                    <label for="order-phone" data-translate="order-phone">Telefon</label>
+                    <input type="tel" id="order-phone" name="phone" required data-translate="order-phone" placeholder="Telefon">
+                    <span class="error-message" id="error-phone"></span>
+                </div>
+                <div class="form-group">
+                    <label for="order-address" data-translate="order-address">Adres</label>
+                    <textarea id="order-address" name="address" required rows="3" data-translate="order-address" placeholder="Adres"></textarea>
+                    <span class="error-message" id="error-address"></span>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="order-cancel-btn" class="order-cancel-btn" data-translate="order-cancel">İptal</button>
+                    <button type="submit" class="order-submit-btn" data-translate="order-submit">Siparişi Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/language.js"></script>
     <script src="js/restaurant-config.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/cart.js"></script>
+    <script src="js/whatsapp-order.js"></script>
     <script src="js/menu.js"></script>
 </body>
 </html>

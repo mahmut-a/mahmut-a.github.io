@@ -68,7 +68,8 @@ function renderMenu() {
 document.addEventListener('DOMContentLoaded', async () => {
     // Tüm cache'leri temizle (restoran menüsü açıldığında)
     clearRestaurantsCache();
-    clearCart(); // Sepet cache'ini de temizle
+    // Sepet cache'ini temizleme - kullanıcı deneyimi için sepet korunmalı
+    // clearCart(); // Yorum satırına alındı - sepet korunmalı
     
     const menuContainer = document.getElementById('menu-container');
     const loading = document.getElementById('loading');
@@ -139,6 +140,9 @@ function increaseProductQuantity(productId) {
     const product = findProductById(productId);
     if (product) {
         addToCart(product, 1);
+    } else {
+        console.error('Ürün bulunamadı:', productId);
+        console.log('MenuData:', menuData);
     }
 }
 
@@ -149,14 +153,21 @@ function decreaseProductQuantity(productId) {
 
 // Ürün ID'sine göre ürün bul
 function findProductById(productId) {
-    if (!menuData) return null;
+    if (!menuData) {
+        console.warn('menuData henüz yüklenmedi');
+        return null;
+    }
     
     for (const category of menuData) {
-        if (category.products) {
+        if (category.products && Array.isArray(category.products)) {
             const product = category.products.find(p => p.id === productId);
-            if (product) return product;
+            if (product) {
+                return product;
+            }
         }
     }
+    
+    console.warn('Ürün bulunamadı:', productId);
     return null;
 }
 
@@ -207,6 +218,9 @@ function initCartUI() {
     // İlk render
     updateCartUI();
     renderCart();
+    
+    // WhatsApp sipariş butonu ve modal entegrasyonu
+    initWhatsAppOrder();
 }
 
 // Sepeti aç/kapat
@@ -307,5 +321,285 @@ function formatPrice(price) {
         style: 'currency',
         currency: 'TRY'
     }).format(price);
+}
+
+// WhatsApp Sipariş Entegrasyonu
+function initWhatsAppOrder() {
+    const whatsappBtn = document.getElementById('whatsapp-order-btn');
+    const orderModal = document.getElementById('order-modal');
+    const orderModalClose = document.getElementById('order-modal-close');
+    const orderModalOverlay = document.querySelector('.order-modal-overlay');
+    const orderForm = document.getElementById('order-form');
+    const orderCancelBtn = document.getElementById('order-cancel-btn');
+    
+    // WhatsApp butonu görünürlüğünü kontrol et
+    updateWhatsAppButtonVisibility();
+    
+    // WhatsApp butonu event listener
+    if (whatsappBtn) {
+        whatsappBtn.addEventListener('click', () => {
+            if (!isCartEmpty()) {
+                openOrderModal();
+            }
+        });
+    }
+    
+    // Modal kapatma
+    if (orderModalClose) {
+        orderModalClose.addEventListener('click', closeOrderModal);
+    }
+    
+    if (orderModalOverlay) {
+        orderModalOverlay.addEventListener('click', closeOrderModal);
+    }
+    
+    if (orderCancelBtn) {
+        orderCancelBtn.addEventListener('click', closeOrderModal);
+    }
+    
+    // Form submit
+    if (orderForm) {
+        orderForm.addEventListener('submit', handleOrderSubmit);
+    }
+    
+    // Sepet güncellendiğinde buton görünürlüğünü güncelle
+    document.addEventListener('cartUpdated', () => {
+        updateWhatsAppButtonVisibility();
+    });
+}
+
+// WhatsApp butonu görünürlüğünü güncelle
+function updateWhatsAppButtonVisibility() {
+    const whatsappBtn = document.getElementById('whatsapp-order-btn');
+    
+    if (!whatsappBtn || !restaurantConfig) {
+        return;
+    }
+    
+    // Sadece whatsapp_order_enabled = true ve sepet dolu ise göster
+    const isEnabled = restaurantConfig.whatsapp_order_enabled === true;
+    const hasItems = !isCartEmpty();
+    
+    if (isEnabled && hasItems) {
+        whatsappBtn.style.display = 'flex';
+    } else {
+        whatsappBtn.style.display = 'none';
+    }
+}
+
+// Sipariş modalını aç
+function openOrderModal() {
+    const orderModal = document.getElementById('order-modal');
+    if (orderModal) {
+        orderModal.classList.add('active');
+        // Formu temizle
+        resetOrderForm();
+        // İlk input'a focus
+        const firstInput = document.getElementById('order-name');
+        if (firstInput) {
+            setTimeout(() => firstInput.focus(), 100);
+        }
+    }
+}
+
+// Sipariş modalını kapat
+function closeOrderModal() {
+    const orderModal = document.getElementById('order-modal');
+    if (orderModal) {
+        orderModal.classList.remove('active');
+        resetOrderForm();
+    }
+}
+
+// Formu sıfırla
+function resetOrderForm() {
+    const form = document.getElementById('order-form');
+    if (form) {
+        form.reset();
+        // Hata mesajlarını temizle
+        clearFormErrors();
+    }
+}
+
+// Form hatalarını temizle
+function clearFormErrors() {
+    const errorMessages = document.querySelectorAll('.error-message');
+    errorMessages.forEach(error => {
+        error.textContent = '';
+    });
+    
+    const errorInputs = document.querySelectorAll('.form-group input.error, .form-group textarea.error');
+    errorInputs.forEach(input => {
+        input.classList.remove('error');
+    });
+}
+
+// Form validasyonu
+function validateOrderForm() {
+    const name = document.getElementById('order-name').value.trim();
+    const phone = document.getElementById('order-phone').value.trim();
+    const address = document.getElementById('order-address').value.trim();
+    
+    let isValid = true;
+    
+    // Ad Soyad kontrolü
+    if (!name) {
+        showFieldError('order-name', 'error-name', t('order-required-field'));
+        isValid = false;
+    } else {
+        clearFieldError('order-name', 'error-name');
+    }
+    
+    // Telefon kontrolü
+    if (!phone) {
+        showFieldError('order-phone', 'error-phone', t('order-required-field'));
+        isValid = false;
+    } else if (!validatePhoneNumber(phone)) {
+        showFieldError('order-phone', 'error-phone', t('order-invalid-phone'));
+        isValid = false;
+    } else {
+        clearFieldError('order-phone', 'error-phone');
+    }
+    
+    // Adres kontrolü
+    if (!address) {
+        showFieldError('order-address', 'error-address', t('order-required-field'));
+        isValid = false;
+    } else {
+        clearFieldError('order-address', 'error-address');
+    }
+    
+    return isValid;
+}
+
+// Alan hatası göster
+function showFieldError(inputId, errorId, message) {
+    const input = document.getElementById(inputId);
+    const error = document.getElementById(errorId);
+    
+    if (input) {
+        input.classList.add('error');
+    }
+    
+    if (error) {
+        error.textContent = message;
+    }
+}
+
+// Alan hatasını temizle
+function clearFieldError(inputId, errorId) {
+    const input = document.getElementById(inputId);
+    const error = document.getElementById(errorId);
+    
+    if (input) {
+        input.classList.remove('error');
+    }
+    
+    if (error) {
+        error.textContent = '';
+    }
+}
+
+// Form submit işlemi
+async function handleOrderSubmit(e) {
+    e.preventDefault();
+    
+    // Validasyon
+    if (!validateOrderForm()) {
+        return;
+    }
+    
+    // Submit butonunu devre dışı bırak
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = t('order-sending') || 'Gönderiliyor...';
+    }
+    
+    try {
+        // Müşteri bilgilerini al
+        const customerInfo = {
+            name: document.getElementById('order-name').value.trim(),
+            phone: document.getElementById('order-phone').value.trim(),
+            address: document.getElementById('order-address').value.trim()
+        };
+        
+        // Sepet içeriğini al
+        const cartItems = getCartItems();
+        
+        // WhatsApp'a gönder
+        const result = await sendOrderToWhatsApp(cartItems, restaurantConfig, customerInfo);
+        
+        // Modalı kapat
+        closeOrderModal();
+        
+        // Başarı bildirimi göster
+        if (result.success) {
+            showOrderSuccessNotification();
+            
+            // API ile gönderildiyse sepeti temizle
+            if (result.method === 'api') {
+                clearCart();
+            }
+        } else {
+            showOrderErrorNotification(result.error || 'Sipariş gönderilemedi');
+        }
+    } catch (error) {
+        console.error('Sipariş gönderilirken hata:', error);
+        showOrderErrorNotification(error.message || 'Sipariş gönderilemedi');
+    } finally {
+        // Submit butonunu tekrar aktif et
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    }
+}
+
+// Sipariş başarı bildirimi göster
+function showOrderSuccessNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'order-notification success';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">✅</span>
+            <span class="notification-message">${t('order-success') || 'Siparişiniz başarıyla gönderildi!'}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animasyon için
+    setTimeout(() => notification.classList.add('show'), 10);
+    
+    // 3 saniye sonra kaldır
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Sipariş hata bildirimi göster
+function showOrderErrorNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'order-notification error';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">❌</span>
+            <span class="notification-message">${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animasyon için
+    setTimeout(() => notification.classList.add('show'), 10);
+    
+    // 5 saniye sonra kaldır
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
 }
 

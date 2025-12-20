@@ -8,6 +8,7 @@ Restoranlar için QR kod tabanlı dijital menü uygulaması. Her restoranın ken
 - 🌍 **Çoklu Dil Desteği**: Türkçe ve İngilizce
 - 🏪 **Merkezi Restoran Yönetimi**: Tüm restoranlar merkezi Supabase'den yönetilir
 - 🛒 **Sepet Sistemi**: Ürün ekleme, çıkarma ve fiyat hesaplama
+- 📱 **WhatsApp Sipariş**: Sepete eklenen ürünleri WhatsApp üzerinden sipariş olarak gönderme
 - 🎨 **Özelleştirilebilir Temalar**: Her restoran kendi temasını özelleştirebilir
 - ⚡ **Hızlı ve Hafif**: Pure JavaScript, framework yok
 - 🔒 **Güvenli API Key Yönetimi**: API key'ler merkezi Supabase'de saklanır
@@ -242,6 +243,15 @@ Normal kullanıcılar bu sayfaya doğrudan erişemezler, sadece QR kod okutarak 
 - Toplam fiyat otomatik hesaplanır
 - Sepet temizlenebilir
 
+### WhatsApp Sipariş Özelliği
+
+- Restoranlar için isteğe bağlı WhatsApp sipariş özelliği
+- Sepete eklenen ürünler WhatsApp üzerinden işletme numarasına sipariş olarak gönderilir
+- Müşteri bilgileri (Ad Soyad, Telefon, Adres) modal form ile alınır
+- Sipariş mesajı otomatik formatlanır (restoran bilgileri, müşteri bilgileri, sipariş detayları, toplam)
+- WhatsApp Web linki üzerinden gönderilir
+- Özellik sadece `whatsapp_order_enabled = true` olan restoranlarda görünür
+
 ### Tema Sistemi
 
 Her restoran kendi temasını özelleştirebilir:
@@ -299,6 +309,7 @@ Tüm stiller `css/style.css` ve `css/responsive.css` dosyalarında bulunur. İst
 ### Yeni Özellikler Ekleme
 
 - **Sepet**: `js/cart.js` - Sepet yönetimi
+- **WhatsApp Sipariş**: `js/whatsapp-order.js` - WhatsApp sipariş modülü
 - **Tema**: `js/theme.js` - Tema yönetimi
 - **Dil**: `js/language.js` - Çoklu dil desteği
 
@@ -355,6 +366,14 @@ QRMenu/
 ```
 
 ## Yeni Özellikler
+
+### v2.1 - WhatsApp Sipariş Özelliği
+
+- ✅ WhatsApp sipariş sistemi (isteğe bağlı aktif edilebilir)
+- ✅ Müşteri iletişim bilgileri formu (Ad Soyad, Telefon, Adres)
+- ✅ Otomatik sipariş mesajı formatlama
+- ✅ WhatsApp Web entegrasyonu
+- ✅ Form validasyonu
 
 ### v2.0 - Merkezi Yönetim ve Sepet Sistemi
 

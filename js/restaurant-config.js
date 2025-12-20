@@ -52,7 +52,13 @@ async function fetchAllRestaurants() {
             logo: restaurant.logo || null,
             supabaseUrl: restaurant.supabase_url,
             supabaseKey: restaurant.supabase_key,
-            theme_id: restaurant.theme_id || null
+            theme_id: restaurant.theme_id || null,
+            whatsapp_number: restaurant.whatsapp_number || null,
+            whatsapp_order_enabled: restaurant.whatsapp_order_enabled || false,
+            whatsapp_api_enabled: restaurant.whatsapp_api_enabled || false,
+            whatsapp_api_url: restaurant.whatsapp_api_url || null,
+            whatsapp_api_key: restaurant.whatsapp_api_key || null,
+            whatsapp_api_method: restaurant.whatsapp_api_method || 'web'
         }));
 
         // Cache'e kaydet

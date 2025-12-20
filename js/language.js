@@ -17,7 +17,18 @@ const translations = {
         'clear-cart': 'Sepeti Temizle',
         'empty-cart': 'Sepetiniz boş',
         'add-to-cart': 'Sepete Ekle',
-        'remove-from-cart': 'Sepetten Çıkar'
+        'remove-from-cart': 'Sepetten Çıkar',
+        'whatsapp-order': 'WhatsApp ile Sipariş Ver',
+        'order-contact-info': 'İletişim Bilgileri',
+        'order-name': 'Ad Soyad',
+        'order-phone': 'Telefon',
+        'order-address': 'Adres',
+        'order-submit': 'Siparişi Gönder',
+        'order-cancel': 'İptal',
+        'order-required-field': 'Bu alan zorunludur',
+        'order-invalid-phone': 'Geçerli bir telefon numarası girin',
+        'order-sending': 'Gönderiliyor...',
+        'order-success': 'Siparişiniz başarıyla gönderildi!'
     },
     en: {
         'app-title': 'QR Menu',
@@ -35,7 +46,18 @@ const translations = {
         'clear-cart': 'Clear Cart',
         'empty-cart': 'Your cart is empty',
         'add-to-cart': 'Add to Cart',
-        'remove-from-cart': 'Remove from Cart'
+        'remove-from-cart': 'Remove from Cart',
+        'whatsapp-order': 'Order via WhatsApp',
+        'order-contact-info': 'Contact Information',
+        'order-name': 'Full Name',
+        'order-phone': 'Phone',
+        'order-address': 'Address',
+        'order-submit': 'Submit Order',
+        'order-cancel': 'Cancel',
+        'order-required-field': 'This field is required',
+        'order-invalid-phone': 'Enter a valid phone number',
+        'order-sending': 'Sending...',
+        'order-success': 'Your order has been sent successfully!'
     }
 };
 

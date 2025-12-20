@@ -57,6 +57,12 @@ CREATE TABLE restaurants (
   supabase_url TEXT NOT NULL,
   supabase_key TEXT NOT NULL,
   theme_id UUID REFERENCES themes(id) ON DELETE SET NULL,
+  whatsapp_number TEXT,
+  whatsapp_order_enabled BOOLEAN DEFAULT false,
+  whatsapp_api_enabled BOOLEAN DEFAULT false,
+  whatsapp_api_url TEXT,
+  whatsapp_api_key TEXT,
+  whatsapp_api_method TEXT DEFAULT 'web',
   is_active BOOLEAN DEFAULT true,
   display_order INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -182,14 +188,14 @@ USING (is_active = true);
 
 ## 6. Örnek Veri Ekleme
 
-Mevcut restoranları merkezi Supabase'e eklemek için (theme_id ile):
+Mevcut restoranları merkezi Supabase'e eklemek için (theme_id ve WhatsApp ile):
 
 ```sql
 -- Önce bir tema ID'si alın (örnek: Modern Mavi temasının ID'si)
 -- SELECT id FROM themes WHERE name = 'Modern Mavi' LIMIT 1;
 
--- Örnek restoran ekleme (theme_id ile)
-INSERT INTO restaurants (id, name, name_en, description, description_en, supabase_url, supabase_key, theme_id, display_order)
+-- Örnek restoran ekleme (theme_id ve WhatsApp ile)
+INSERT INTO restaurants (id, name, name_en, description, description_en, supabase_url, supabase_key, theme_id, whatsapp_number, whatsapp_order_enabled, display_order)
 VALUES (
   'nalonaRestoran',
   'Nalona Restoran',
@@ -199,6 +205,8 @@ VALUES (
   'https://ysahpcvlquczubwywinh.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzYWhwY3ZscXVjenVid3l3aW5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNDQ3NzAsImV4cCI6MjA4MDYyMDc3MH0.Lm35XQYU1r0A-FvOP-dOtyu5yONVfHFjY4H2__JLIkk',
   (SELECT id FROM themes WHERE name = 'Modern Mavi' LIMIT 1), -- Tema ID'si
+  '905551234567', -- WhatsApp numarası (ülke kodu ile, + işareti olmadan)
+  true, -- WhatsApp sipariş özelliği aktif
   1
 );
 
@@ -273,7 +281,92 @@ Tema JSON'u şu alanları içerebilir (hepsi opsiyonel, belirtilmeyenler varsay�
 }
 ```
 
-## 8. Merkezi Supabase Bağlantı Bilgileri
+## 8. WhatsApp Sipariş Özelliği
+
+### WhatsApp Numarası Formatı
+
+WhatsApp numarası şu formatta saklanmalıdır:
+- Ülke kodu ile (örn: Türkiye için `90`)
+- `+` işareti olmadan
+- Boşluk, tire, parantez gibi karakterler olmadan
+- Örnek: `905551234567` (Türkiye için)
+
+### WhatsApp Sipariş Yöntemleri
+
+İki yöntem desteklenir:
+
+1. **WhatsApp Web Linki** (Varsayılan): Kullanıcı WhatsApp Web'i açar ve mesajı manuel gönderir
+2. **WhatsApp API**: Direkt API üzerinden mesaj gönderilir, kullanıcı WhatsApp açmaz
+
+### WhatsApp Web Linki ile Sipariş
+
+```sql
+-- Restoran için WhatsApp Web linki sipariş özelliğini aktif et
+UPDATE restaurants 
+SET whatsapp_number = '905551234567',
+    whatsapp_order_enabled = true,
+    whatsapp_api_enabled = false,
+    whatsapp_api_method = 'web'
+WHERE id = 'restaurant-id';
+```
+
+### WhatsApp API ile Sipariş
+
+```sql
+-- Restoran için WhatsApp API sipariş özelliğini aktif et
+UPDATE restaurants 
+SET whatsapp_number = '905551234567',
+    whatsapp_order_enabled = true,
+    whatsapp_api_enabled = true,
+    whatsapp_api_url = 'https://api.example.com/whatsapp/send',
+    whatsapp_api_key = 'your-api-key-here',
+    whatsapp_api_method = 'api'
+WHERE id = 'restaurant-id';
+```
+
+**API Endpoint Beklenen Format:**
+
+API endpoint'iniz şu formatta POST isteği beklemelidir:
+
+```json
+{
+  "phone": "905551234567",
+  "message": "Sipariş mesajı...",
+  "customer": {
+    "name": "Ahmet Yılmaz",
+    "phone": "0555 123 45 67",
+    "address": "Adres bilgisi"
+  }
+}
+```
+
+**API Response Formatı:**
+
+```json
+{
+  "success": true,
+  "message": "Sipariş başarıyla gönderildi",
+  "order_id": "optional-order-id"
+}
+```
+
+**API Headers:**
+
+- `Content-Type: application/json`
+- `Authorization: Bearer {whatsapp_api_key}` (veya `X-API-Key: {whatsapp_api_key}`)
+
+**Not:** API başarısız olursa otomatik olarak WhatsApp Web linki yöntemine geçilir.
+
+### WhatsApp Sipariş Özelliğini Pasif Etme
+
+```sql
+-- Restoran için WhatsApp sipariş özelliğini pasif et
+UPDATE restaurants 
+SET whatsapp_order_enabled = false
+WHERE id = 'restaurant-id';
+```
+
+## 9. Merkezi Supabase Bağlantı Bilgileri
 
 Merkezi Supabase projenizin URL ve anon key'ini almak için:
 1. Supabase Dashboard'a gidin
@@ -285,6 +378,11 @@ Merkezi Supabase projenizin URL ve anon key'ini almak için:
 
 - Merkezi Supabase'deki `supabase_key` alanı, her restoranın kendi Supabase projesinin anon key'idir
 - Bu key'ler frontend'de kullanılacağı için anon key olmalıdır (service_role key değil)
-- Tema sistemi: Öncelik `theme_id` ile veritabanından çekilen temadadır. Eğer `theme_id` yoksa veya tema bulunamazsa, `theme` JSONB alanı kontrol edilir. İkisi de yoksa varsayılan tema kullanılır
+- Tema sistemi: Öncelik `theme_id` ile veritabanından çekilen temadadır. Eğer `theme_id` yoksa veya tema bulunamazsa varsayılan tema kullanılır
 - Tema seçenekleri `themes` tablosunda merkezi olarak yönetilir, böylece aynı tema birden fazla restorana atanabilir
+- WhatsApp sipariş özelliği: Sadece `whatsapp_order_enabled = true` olan restoranlarda görünür
+- WhatsApp numarası: `whatsapp_number` alanı doldurulmalı ve `whatsapp_order_enabled = true` olmalıdır
+- WhatsApp API: `whatsapp_api_enabled = true` ise API kullanılır, aksi halde Web linki kullanılır
+- API Fallback: API başarısız olursa otomatik olarak Web linki yöntemine geçilir
+- Sipariş Bildirimi: API ile gönderim başarılı olursa kullanıcıya bildirim gösterilir ve sepet temizlenir
 
